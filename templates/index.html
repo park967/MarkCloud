@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상표 검색</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+        }
+        .search-form {
+            margin-bottom: 20px;
+        }
+        .search-form input, .search-form select, .search-form button {
+            padding: 10px;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        .results {
+            margin-top: 30px;
+        }
+        .results table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .results th, .results td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .results th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 검색 폼 -->
+    <h1>상표 검색</h1>
+    <form class="search-form" action="/search" method="get">
+        <input type="text" name="product_code" placeholder="상품 코드" value="{{ product_code or '' }}" />
+        <input type="text" name="query" placeholder="검색어" value="{{ query or '' }}" />
+        <select name="status">
+            <option value="">전체</option>
+            <option value="등록" {% if status == '등록' %}selected{% endif %}>등록</option>
+            <option value="실효" {% if status == '실효' %}selected{% endif %}>실효</option>
+            <option value="거절" {% if status == '거절' %}selected{% endif %}>거절</option>
+            <option value="출원" {% if status == '출원' %}selected{% endif %}>출원</option>
+        </select>
+        
+        <input type="date" name="start_date" value="{{ start_date or '' }}" />
+        <input type="date" name="end_date" value="{{ end_date or '' }}" />
+        
+        <select name="sort_by">
+            <option value="applicationDate" {% if sort_by == 'applicationDate' %}selected{% endif %}>등록일</option>
+            <option value="applicationNumber" {% if sort_by == 'applicationNumber' %}selected{% endif %}>상품 코드</option>
+        </select>
+
+        <select name="sort_order">
+            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>오름차순</option>
+            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>내림차순</option>
+        </select>
+
+        <button type="submit">검색</button>
+    </form>
+
+    <!-- 검색 결과 -->
+    <div class="results">
+        <p>검색 결과: {{ count }}건</p>
+
+        {% if results %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>상품 코드</th>
+                        <th>상품명 (한글)</th>
+                        <th>상품명 (영문)</th>
+                        <th>등록 상태</th>
+                        <th>등록일</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                        <tr>
+                            <!-- None 값은 빈 문자열로 처리 -->
+                            <td>{{ result.applicationNumber or '' }}</td>
+                            <td>{{ result.productName or '' }}</td>
+                            <td>{{ result.productNameEng or '' }}</td>
+                            <td>{{ result.registerStatus or '' }}</td>
+                            <td>{{ result.applicationDate or '' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>검색 결과가 없습니다.</p>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>
