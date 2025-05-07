@@ -8,14 +8,14 @@ from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
-# 템플릿 디렉토리 설정
+
 templates = Jinja2Templates(directory="templates")
 
-# JSON 데이터 로딩
+
 with open("trademark_sample.json", "r", encoding="utf-8") as f:
     raw_data = json.load(f)
 
-# 날짜 비교를 위한 헬퍼 함수
+# 날짜 비교
 def parse_date(date_str: str) -> Optional[datetime]:
     try:
         if len(date_str) == 8 and date_str.isdigit():
@@ -24,6 +24,12 @@ def parse_date(date_str: str) -> Optional[datetime]:
         return datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
         return None
+
+# 페이지네이션 
+def paginate_data(data, page, size):
+    start = (page - 1) * size
+    end = start + size
+    return data[start:end]
 
 @app.get("/", response_class=HTMLResponse)
 def homepage(request: Request):
@@ -38,7 +44,9 @@ def search_trademarks(
     start_date: Optional[str] = Query(None, description="시작 등록일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료 등록일 (YYYY-MM-DD)"),
     sort_by: Optional[str] = Query(None, description="정렬 기준 (registerDate, productCode)"),
-    sort_order: Optional[str] = Query("asc", description="정렬 순서 (asc, desc)")
+    sort_order: Optional[str] = Query("asc", description="정렬 순서 (asc, desc)"),
+    page: int = Query(1, description="페이지 번호", ge=1), 
+    size: int = Query(20, description="페이지당 항목 수", ge=1), 
 ):
     try:
         start_dt = parse_date(start_date) if start_date else None
@@ -95,9 +103,17 @@ def search_trademarks(
             elif sort_by == "applicationNumber":
                 filtered_results.sort(key=lambda x: x.get("applicationNumber", ""), reverse=reverse_order)
 
+        # 페이지네이션 적용
+        paginated_results = paginate_data(filtered_results, page, size)
+        total_pages = (len(filtered_results) + size - 1) // size
+
+        # 페이지 번호 그룹화
+        page_group_start = (page - 1) // 10 * 10 + 1
+        page_group_end = min(page_group_start + 9, total_pages)
+
         # 디버깅 로그
         print(f"Filtered Results Count: {len(filtered_results)}")
-        print(f"Filtered Results: {filtered_results[:5]}")  # 처음 5개 결과만 확인
+        print(f"Filtered Results: {filtered_results[:5]}")  
 
         # 템플릿 렌더링
         return templates.TemplateResponse(
@@ -112,7 +128,12 @@ def search_trademarks(
                 "sort_by": sort_by,
                 "sort_order": sort_order,
                 "count": len(filtered_results),
-                "results": filtered_results
+                "results": paginated_results,
+                "page": page,
+                "total_pages": total_pages,
+                "page_group_start": page_group_start,
+                "page_group_end": page_group_end,
+                "page_group": range(page_group_start, page_group_end + 1)
             }
         )
 

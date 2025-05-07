@@ -36,6 +36,43 @@
         .results th {
             background-color: #f2f2f2;
         }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+                margin-top: 20px;
+        }
+
+        .pagination a {
+            padding: 8px 12px;
+            margin: 0 5px;
+            text-decoration: none;
+            color: #333;
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .pagination a.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .pagination a:hover {
+            background-color: #ddd;
+            color: #333;
+        }
+
+        .pagination a:disabled {
+            background-color: #ccc;
+            border-color: #ccc;
+            color: #888;
+            pointer-events: none;
+        }
+
+        
     </style>
 </head>
 <body>
@@ -45,7 +82,7 @@
     <h1>상표 검색</h1>
     <form class="search-form" action="/search" method="get">
         <input type="text" name="product_code" placeholder="상품 코드" value="{{ product_code or '' }}" />
-        <input type="text" name="query" placeholder="검색어" value="{{ query or '' }}" />
+        <input type="text" name="query" placeholder="상품명" value="{{ query or '' }}" />
         <select name="status">
             <option value="">전체</option>
             <option value="등록" {% if status == '등록' %}selected{% endif %}>등록</option>
@@ -103,6 +140,23 @@
         {% endif %}
     </div>
 </div>
+<!-- 페이지네이션 -->
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="?page=1&product_code={{ product_code }}&query={{ query }}&status={{ status }}&start_date={{ start_date }}&end_date={{ end_date }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}"><<</a>
+        <a href="?page={{ page - 1 }}&product_code={{ product_code }}&query={{ query }}&status={{ status }}&start_date={{ start_date }}&end_date={{ end_date }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}"><</a>
+    {% endif %}
+
+    {% for i in page_group %}
+        <a href="?page={{ i }}&product_code={{ product_code }}&query={{ query }}&status={{ status }}&start_date={{ start_date }}&end_date={{ end_date }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}" {% if i == page %}class="active"{% endif %}>{{ i }}</a>
+    {% endfor %}
+
+    {% if page < total_pages %}
+        <a href="?page={{ page + 1 }}&product_code={{ product_code }}&query={{ query }}&status={{ status }}&start_date={{ start_date }}&end_date={{ end_date }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}">></a>
+        <a href="?page={{ total_pages }}&product_code={{ product_code }}&query={{ query }}&status={{ status }}&start_date={{ start_date }}&end_date={{ end_date }}&sort_by={{ sort_by }}&sort_order={{ sort_order }}">>></a>
+    {% endif %}
+</div>
+
 
 </body>
 </html>
